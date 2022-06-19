@@ -3,10 +3,10 @@
   "supportsCohorts": false,
   "supportsBackfill": false,
   "configFields": [{
-    "key": "apiKey",
-    "name": "API Key ",
-    "sensitive": true,
+    "key": "shopIdMapping",
+    "name": "Shop ID to Public API Key Mapping ",
+    "sensitive": false,
     "required": true,
-    "type": "string"
+    "type": "keyValueList"
   }]
 }

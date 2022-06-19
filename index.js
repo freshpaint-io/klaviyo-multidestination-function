@@ -1,29 +1,56 @@
-// The following APIs and libraries are available at runtime:
-// * aws-sdk@2.1079.0 as AWS
-// * atob@2.1.2 as atob
-// * btoa@1.2.1 as btoa
-// * crypto as crypto
-// * form-data@2.4.0 as FormData
-// * oauth@0.9.15 as OAuth
-// * xml@1.0.1 as xml
-// * lodash@4.17.15 as _
-// * node-fetch@2.6.0 as fetch
-
-/**
- * Handle track event
- */
 async function onTrack(event, settings) {
-  // Learn more at https://documentation.freshpaint.io/developer-docs/freshpaint-sdk-reference#track
-  const endpoint = ''; // replace with your endpoint
+  const klaviyoEvent = eventToKlaviyoEvent(event, settings);
+  if (!klaviyoEvent) {
+    return;
+  }
 
-  await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${btoa(settings.apiKey + ':')}`,
-      'Content-Type': 'application/json'
+  const buff = new Buffer.from(JSON.stringify(klaviyoEvent));
+  const url = "https://a.klaviyo.com/api/track?data=" + buff.toString("base64");
+
+  const options = { method: "GET", headers: { Accept: "text/html" } };
+  const response = await fetch(url, options)
+    .then((res) => res.json())
+    .then((json) => console.log(json))
+    .catch((err) => console.error("error:" + err));
+
+  console.log(response);
+}
+
+const propertyMapping = {
+  email: "$email",
+  firstName: "$first_name",
+  lastName: "$last_name",
+  phone: "$phone_number",
+  title: "$title",
+};
+
+function eventToKlaviyoEvent(event, settings) {
+  const apiKey = apiKeyForShop(
+    event.properties.shopId.toString(),
+    settings.shopIdMapping
+  );
+  if (!apiKey) {
+    return null;
+  }
+
+  return {
+    token: apiKey,
+    event: event.event,
+    customer_properties: {
+      $id: event.userId || event.anonymousId,
     },
-    body: JSON.stringify(event)
-  });
+    properties: event.properties,
+  };
+}
+
+function apiKeyForShop(id, shopIdMapping) {
+  for (let { key, value } of shopIdMapping) {
+    if (id === key) {
+      return value;
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -31,7 +58,7 @@ async function onTrack(event, settings) {
  */
 async function onIdentify(event, settings) {
   // Learn more at https://documentation.freshpaint.io/developer-docs/freshpaint-sdk-reference#identify
-  throw new EventNotSupported('identify is not supported');
+  throw new EventNotSupported("identify is not supported");
 }
 
 /**
@@ -39,7 +66,7 @@ async function onIdentify(event, settings) {
  */
 async function onGroup(event, settings) {
   // Learn more at https://documentation.freshpaint.io/developer-docs/freshpaint-sdk-reference#group
-  throw new EventNotSupported('group is not supported');
+  throw new EventNotSupported("group is not supported");
 }
 
 /**
@@ -47,5 +74,5 @@ async function onGroup(event, settings) {
  */
 async function onPage(event, settings) {
   // Learn more at https://documentation.freshpaint.io/developer-docs/freshpaint-sdk-reference#page
-  throw new EventNotSupported('page is not supported');
+  throw new EventNotSupported("page is not supported");
 }
